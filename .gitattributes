@@ -1,0 +1,14 @@
+# Normalise line endings for text files
+* text=auto
+
+# Game assets are binary: never touch their bytes
+*.glb   binary
+*.bin   binary
+*.jpg   binary
+*.jpeg  binary
+*.png   binary
+*.hdr   binary
+*.blend binary
+
+# Windows batch files need CRLF line endings
+*.bat   text eol=crlf

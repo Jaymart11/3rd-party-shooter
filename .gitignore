@@ -1,0 +1,29 @@
+# Dependencies (reinstall with: npm install)
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Half-finished downloads and Blender backups
+*.part
+*.blend1
+*.blend2
+
+# Environment / secrets
+.env
+.env.*
+
+# Personal Claude Code settings (shared .claude/launch.json stays tracked)
+.claude/settings.local.json
+
+# OS and editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# Markdown is always kept (README.md and any other docs)
+!*.md

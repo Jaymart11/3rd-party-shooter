@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strikeline — LAN Shooter</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": { "three": "/three/build/three.module.js", "three/addons/": "/three/examples/jsm/" } }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<!-- lobby -->
+<div id="lobby" class="screen">
+  <div class="panel">
+    <h1>STRIKE<span>LINE</span></h1>
+    <p class="sub">Tactical third-person shooter · LAN multiplayer</p>
+    <label>Callsign <input id="name" maxlength="16" placeholder="Your name"></label>
+    <div class="label">Team</div>
+    <div class="teams">
+      <button class="team atk" data-team="atk">Attackers</button>
+      <button class="team auto sel" data-team="auto">Auto</button>
+      <button class="team def" data-team="def">Defenders</button>
+    </div>
+    <div class="label">Graphics</div>
+    <div class="teams gfx">
+      <button data-gfx="low">Low</button>
+      <button data-gfx="high" class="sel">High</button>
+    </div>
+    <button id="play" disabled>Loading…</button>
+    <div id="roominfo"></div>
+    <div id="progress"><div></div></div>
+    <div id="lan"></div>
+    <details class="controls">
+      <summary>Controls</summary>
+      <table>
+        <tr><td>WASD</td><td>Move</td></tr><tr><td>Mouse</td><td>Look</td></tr>
+        <tr><td>Left click</td><td>Shoot</td></tr><tr><td>Right click</td><td>Aim down sights</td></tr>
+        <tr><td>Shift</td><td>Walk (quiet, accurate)</td></tr><tr><td>Ctrl / C</td><td>Crouch · crouch in the air to tuck your legs (crouch jump)</td></tr>
+        <tr><td>Space</td><td>Jump · hold to bunny hop · press again against a wall to wall-jump</td></tr><tr><td>A/D + mouse</td><td>Air strafe: hold A or D and turn the same way while hopping to gain speed</td></tr><tr><td>Q</td><td>Dash (unlimited)</td></tr><tr><td>R</td><td>Reload</td></tr>
+        <tr><td>1–4 / wheel</td><td>Switch weapon (Standard: rifle, sniper, pistol, knife)</td></tr><tr><td>Right click (sniper)</td><td>Scope in</td></tr><tr><td>Grenade</td><td>Left = throw, right = short lob. Blasts knock you back (grenade-jump)</td></tr><tr><td>Knife</td><td>Left = slash, right = heavy stab (x1.5 from behind)</td></tr><tr><td>M / N</td><td>Change mode / map (host)</td></tr><tr><td>E</td><td>Throw smoke</td></tr>
+        <tr><td>V</td><td>Swap shoulder</td></tr><tr><td>Tab</td><td>Scoreboard</td></tr>
+        <tr><td>T</td><td>Switch team</td></tr><tr><td>B</td><td>Change number of bots (host)</td></tr>
+        <tr><td>F3</td><td>Show FPS / performance</td></tr>
+      </table>
+    </details>
+  </div>
+</div>
+
+
+<!-- waiting room (before a match starts) -->
+<div id="room" class="screen hidden">
+  <div class="panel wide">
+    <div class="room-head">
+      <h2>WAITING ROOM</h2>
+      <div id="room-count"></div>
+    </div>
+    <div class="room-teams">
+      <div class="room-team atk"><h3>ATTACKERS</h3><ul id="room-atk"></ul><button data-jointeam="atk">Join Attackers</button></div>
+      <div class="room-team def"><h3>DEFENDERS</h3><ul id="room-def"></ul><button data-jointeam="def">Join Defenders</button></div>
+    </div>
+    <div class="room-settings">
+      <div class="label">Map</div>
+      <div class="teams maps">
+        <button data-map="yard">Dustline Yard</button>
+        <button data-map="updraft">Updraft (parkour)</button>
+        <button data-map="pinnacle">Pinnacle (sky high)</button>
+        <button data-map="trenchline">Trenchline (grenades)</button>
+      </div>
+      <div class="label">Mode</div>
+      <div class="teams modes">
+        <button data-mode="standard">Standard</button>
+        <button data-mode="ar">AR Only</button>
+        <button data-mode="sniper">Sniper</button>
+        <button data-mode="knife">Knife</button>
+        <button data-mode="grenade">Grenade</button>
+      </div>
+      <div class="room-row">
+        <div>
+          <div class="label">Practice bots</div>
+          <div class="teams bots">
+            <button data-bots="0">Off</button><button data-bots="1">1</button><button data-bots="3">3</button><button data-bots="5">5</button>
+          </div>
+        </div>
+        <div>
+          <div class="label">Bot skill</div>
+          <div class="teams diff">
+            <button data-diff="easy">Easy</button><button data-diff="normal">Normal</button><button data-diff="hard">Hard</button>
+          </div>
+        </div>
+      </div>
+      <div class="room-row">
+        <div>
+          <div class="label">Wall jump</div>
+          <div class="teams"><button data-rule="wallJump" data-val="1">On</button><button data-rule="wallJump" data-val="0">Off</button></div>
+        </div>
+        <div>
+          <div class="label">Dash (Q)</div>
+          <div class="teams"><button data-rule="dash" data-val="1">On</button><button data-rule="dash" data-val="0">Off</button></div>
+        </div>
+      </div>
+    </div>
+    <button id="start-match">START MATCH</button>
+    <div id="room-wait">Waiting for the host to start the match…</div>
+    <div id="room-lan"></div>
+  </div>
+</div>
+
+<!-- paused overlay -->
+<div id="paused" class="screen hidden"><div class="panel small"><h2>PAUSED</h2><p>Click to play</p><button id="end-match" class="hidden">End match (back to lobby)</button></div></div>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="crosshair"><i class="t"></i><i class="b"></i><i class="l"></i><i class="r"></i><i class="dot"></i></div>
+  <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+  <div id="smokefog"></div>
+  <div id="scope"><div class="lens"></div><i class="h"></i><i class="v"></i><i class="dot"></i></div>
+  <div id="vignette"></div>
+  <div id="dmgdir"></div>
+  <div id="topbar">
+    <div class="score atk"><span id="score-atk">0</span><small>ATK</small></div>
+    <div class="clock"><div id="timer">0:00</div><div id="phase">WARMUP</div></div>
+    <div class="score def"><small>DEF</small><span id="score-def">0</span></div>
+  </div>
+  <div id="alive"><div id="alive-atk"></div><div id="alive-def"></div></div>
+  <div id="killfeed"></div>
+  <div id="center-msg"></div>
+  <div id="sub-msg"></div>
+  <div id="health"><div class="hp-num" id="hp">100</div><div class="hp-bar"><div id="hp-fill"></div></div><div class="team-tag" id="team-tag"></div></div>
+  <div id="ammo"><div class="wname" id="wname">Vanguard AR</div><div><span id="mag">25</span><small id="reserve">/ 75</small></div><div id="reload-bar"><div></div></div></div>
+  <div id="ability"><kbd>E</kbd> SMOKE <span id="smokes">2</span></div>
+  <div id="minimap"><canvas id="mm" width="200" height="120"></canvas></div>
+  <div id="scoreboard" class="hidden"></div>
+  <div id="feedmsg"></div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
